@@ -80,5 +80,70 @@ export const api = {
   // Generate random query
   async generateRandomQuery(): Promise<RandomQueryResponse> {
     return apiRequest<RandomQueryResponse>('/generate-random-query');
+  },
+
+  // Export a table as CSV (triggers a browser download)
+  async exportTable(tableName: string): Promise<void> {
+    return downloadFile(`/export/table/${encodeURIComponent(tableName)}`, {
+      method: 'GET'
+    }, `${tableName}.csv`);
+  },
+
+  // Export query results as CSV (triggers a browser download)
+  async exportResults(sql: string): Promise<void> {
+    return downloadFile('/export/results', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sql } as ExportResultsRequest)
+    }, 'query_results.csv');
   }
 };
+
+// Fetch an endpoint and trigger a browser download of the response body.
+// Derives the filename from the Content-Disposition header when present,
+// otherwise falls back to the provided default.
+async function downloadFile(
+  endpoint: string,
+  options: RequestInit,
+  defaultFilename: string
+): Promise<void> {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  const response = await fetch(url, options);
+
+  if (!response.ok) {
+    // Try to surface a useful error message from the JSON body
+    let message = `HTTP error! status: ${response.status}`;
+    try {
+      const data = await response.json();
+      if (data?.detail) {
+        message = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+      }
+    } catch {
+      // Response body was not JSON; keep the default message
+    }
+    throw new Error(message);
+  }
+
+  // Determine the filename from Content-Disposition when available
+  let filename = defaultFilename;
+  const disposition = response.headers.get('Content-Disposition');
+  if (disposition) {
+    const match = /filename="?([^"]+)"?/.exec(disposition);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(objectUrl);
+}

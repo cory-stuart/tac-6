@@ -3,6 +3,16 @@ import { api } from './api/client'
 
 // Global state
 
+// Inline SVG download glyph reused by both download buttons for a cohesive UI
+const DOWNLOAD_ICON_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+       stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="7 10 12 15 17 10"></polyline>
+    <line x1="12" y1="15" x2="12" y2="3"></line>
+  </svg>`;
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
   initializeQueryInput();
@@ -216,6 +226,31 @@ function displayResults(response: QueryResponse, query: string) {
     resultsContainer.style.display = resultsContainer.style.display === 'none' ? 'block' : 'none';
     toggleButton.textContent = resultsContainer.style.display === 'none' ? 'Show' : 'Hide';
   });
+
+  // Download-results button: created once, placed directly to the left of "Hide"
+  const resultsHeader = toggleButton.parentElement as HTMLElement;
+  let downloadButton = document.getElementById('download-results') as HTMLButtonElement | null;
+  if (!downloadButton) {
+    downloadButton = document.createElement('button');
+    downloadButton.id = 'download-results';
+    downloadButton.className = 'download-results-button';
+    downloadButton.innerHTML = DOWNLOAD_ICON_SVG;
+    downloadButton.title = 'Download results as CSV';
+    resultsHeader.insertBefore(downloadButton, toggleButton);
+  }
+
+  // Only enable the button when there are results and no error
+  const canExport = !response.error && response.results.length > 0;
+  downloadButton.style.display = canExport ? '' : 'none';
+  downloadButton.onclick = canExport
+    ? async () => {
+        try {
+          await api.exportResults(response.sql);
+        } catch (error) {
+          displayError(error instanceof Error ? error.message : 'Failed to download results');
+        }
+      }
+    : null;
 }
 
 // Create results table
@@ -285,14 +320,32 @@ function displayTables(tables: TableSchema[]) {
     tableLeft.appendChild(tableName);
     tableLeft.appendChild(tableInfo);
     
+    const downloadButton = document.createElement('button');
+    downloadButton.className = 'download-table-button';
+    downloadButton.innerHTML = DOWNLOAD_ICON_SVG;
+    downloadButton.title = 'Download table as CSV';
+    downloadButton.onclick = async () => {
+      try {
+        await api.exportTable(table.name);
+      } catch (error) {
+        displayError(error instanceof Error ? error.message : 'Failed to download table');
+      }
+    };
+
     const removeButton = document.createElement('button');
     removeButton.className = 'remove-table-button';
     removeButton.innerHTML = '&times;';
     removeButton.title = 'Remove table';
     removeButton.onclick = () => removeTable(table.name);
-    
+
+    // Actions group keeps the download button directly to the left of the × icon
+    const tableActions = document.createElement('div');
+    tableActions.className = 'table-actions';
+    tableActions.appendChild(downloadButton);
+    tableActions.appendChild(removeButton);
+
     tableHeader.appendChild(tableLeft);
-    tableHeader.appendChild(removeButton);
+    tableHeader.appendChild(tableActions);
     
     // Columns section
     const tableColumns = document.createElement('div');

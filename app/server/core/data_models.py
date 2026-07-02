@@ -75,6 +75,10 @@ class RandomQueryResponse(BaseModel):
     query: str
     error: Optional[str] = None
 
+# Export Models
+class ExportResultsRequest(BaseModel):
+    sql: str = Field(..., description="SQL of the query results to export as CSV")
+
 # Health Check Models
 class HealthCheckRequest(BaseModel):
     pass

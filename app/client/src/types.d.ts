@@ -76,6 +76,11 @@ interface RandomQueryResponse {
   error?: string;
 }
 
+// Export Types
+interface ExportResultsRequest {
+  sql: string;
+}
+
 // Health Check Types
 interface HealthCheckResponse {
   status: "ok" | "error";
