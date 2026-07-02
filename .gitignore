@@ -62,3 +62,6 @@ screenshots/
 
 # Playwright video recordings
 videos/
+
+# Playwright MCP session artifacts
+.playwright-mcp/

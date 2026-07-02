@@ -402,7 +402,10 @@ def find_existing_branch_for_issue(
     """Find an existing branch for the given issue number.
     Returns branch name if found, None otherwise."""
     # List all branches
-    result = subprocess.run(["git", "branch", "-a"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "branch", "-a"], capture_output=True, text=True,
+        encoding="utf-8", errors="replace"
+    )
 
     if result.returncode != 0:
         return None
@@ -479,7 +482,8 @@ def create_or_find_branch(
         current = get_current_branch()
         if current != branch_name:
             result = subprocess.run(
-                ["git", "checkout", branch_name], capture_output=True, text=True
+                ["git", "checkout", branch_name], capture_output=True, text=True,
+                encoding="utf-8", errors="replace"
             )
             if result.returncode != 0:
                 # Branch might not exist locally, try to create from remote
@@ -487,6 +491,8 @@ def create_or_find_branch(
                     ["git", "checkout", "-b", branch_name, f"origin/{branch_name}"],
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                 )
                 if result.returncode != 0:
                     return "", f"Failed to checkout branch: {result.stderr}"
@@ -499,7 +505,8 @@ def create_or_find_branch(
         logger.info(f"Found existing branch: {existing_branch}")
         # Checkout the branch
         result = subprocess.run(
-            ["git", "checkout", existing_branch], capture_output=True, text=True
+            ["git", "checkout", existing_branch], capture_output=True, text=True,
+            encoding="utf-8", errors="replace"
         )
         if result.returncode != 0:
             return "", f"Failed to checkout branch: {result.stderr}"
@@ -545,7 +552,8 @@ def find_spec_file(state: ADWState, logger: logging.Logger) -> Optional[str]:
     # Otherwise, try to find it from git diff
     logger.info("Looking for spec file in git diff")
     result = subprocess.run(
-        ["git", "diff", "origin/main", "--name-only"], capture_output=True, text=True
+        ["git", "diff", "origin/main", "--name-only"], capture_output=True, text=True,
+        encoding="utf-8", errors="replace"
     )
 
     if result.returncode == 0:

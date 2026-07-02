@@ -69,7 +69,6 @@ MAX_REVIEW_RETRY_ATTEMPTS = 3
 def check_env_vars(logger: Optional[logging.Logger] = None) -> None:
     """Check that all required environment variables are set."""
     required_vars = [
-        "ANTHROPIC_API_KEY",
         "CLAUDE_CODE_PATH",
     ]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
@@ -474,7 +473,8 @@ def main():
     # Checkout the branch from state
     branch_name = state.get("branch_name")
     result = subprocess.run(
-        ["git", "checkout", branch_name], capture_output=True, text=True
+        ["git", "checkout", branch_name], capture_output=True, text=True,
+        encoding="utf-8", errors="replace"
     )
     if result.returncode != 0:
         logger.error(f"Failed to checkout branch {branch_name}: {result.stderr}")
