@@ -102,7 +102,7 @@ SQL Query:"""
         
         # Call Anthropic API
         response = client.messages.create(
-            model="claude-3-haiku-20240307",
+            model="claude-haiku-4-5",
             max_tokens=500,
             temperature=0.1,
             messages=[
@@ -234,7 +234,7 @@ Natural language query:"""
         
         # Call Anthropic API
         response = client.messages.create(
-            model="claude-3-haiku-20240307",
+            model="claude-haiku-4-5",
             max_tokens=100,
             temperature=0.8,
             messages=[
